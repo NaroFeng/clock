@@ -12,11 +12,20 @@
         }
         body {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             background: linear-gradient(135deg, #1a1a2e, #16213e);
             font-family: 'Segoe UI', sans-serif;
+            color: #fff;
+        }
+        .greeting {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: #e94560;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
         }
         .clock {
             position: relative;
@@ -39,12 +48,24 @@
             border-radius: 50%;
             z-index: 10;
         }
+        .numbers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        .number {
+            position: absolute;
+            font-size: 14px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 0.8);
+        }
         .hand {
             position: absolute;
             bottom: 50%;
             left: 50%;
             transform-origin: bottom center;
             border-radius: 4px;
+            transition: transform 0.5s ease;
         }
         .hour {
             width: 6px;
@@ -63,35 +84,96 @@
             height: 110px;
             background: #e94560;
             transform: translateX(-50%);
+            transition: transform 0.1s linear;
         }
         .time-display {
-            position: absolute;
-            bottom: -60px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #fff;
-            font-size: 2rem;
+            margin-top: 40px;
+            font-size: 2.5rem;
             font-weight: bold;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
         }
-        .date-display {
-            position: absolute;
-            bottom: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 255, 255, 0.7);
+        .info {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .date {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        .day {
             font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 8px;
+        }
+        .fun-emoji {
+            font-size: 2rem;
+            margin-top: 15px;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
     </style>
 </head>
 <body>
+    <div class="greeting" id="greeting"></div>
     <div class="clock">
+        <div class="numbers" id="numbers"></div>
         <div class="hand hour" id="hour"></div>
         <div class="hand minute" id="minute"></div>
         <div class="hand second" id="second"></div>
-        <div class="time-display" id="time"></div>
-        <div class="date-display" id="date"></div>
+    </div>
+    <div class="time-display" id="time"></div>
+    <div class="info">
+        <div class="date" id="date"></div>
+        <div class="day" id="day"></div>
+        <div class="fun-emoji" id="emoji"></div>
     </div>
     <script>
+        const greetings = [
+            { start: 0, end: 5, text: "夜猫子还没睡呀~ 🦉" },
+            { start: 6, end: 11, text: "早上好！新的一天开始啦~ 🌅" },
+            { start: 12, end: 13, text: "午安！休息一下吃顿饭~ 🍱" },
+            { start: 14, end: 17, text: "下午好！继续加油~ 💪" },
+            { start: 18, end: 20, text: "傍晚好！美丽的夕阳~ 🌆" },
+            { start: 21, end: 23, text: "晚上好！准备睡觉了吗~ 🌙" }
+        ];
+
+        const emojis = ["☕", "🍕", "🎮", "📚", "🎵", "🌟", "💫", "✨", "🎉", "😄"];
+        
+        const weekDays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const weekDaysCN = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+
+        function createNumbers() {
+            const container = document.getElementById('numbers');
+            for (let i = 1; i <= 12; i++) {
+                const num = document.createElement('div');
+                num.className = 'number';
+                num.textContent = i;
+                const angle = (i - 3) * 30 * (Math.PI / 180);
+                const radius = 115;
+                const x = 150 + radius * Math.cos(angle);
+                const y = 150 + radius * Math.sin(angle);
+                num.style.left = `${x}px`;
+                num.style.top = `${y}px`;
+                num.style.transform = 'translate(-50%, -50%)';
+                container.appendChild(num);
+            }
+        }
+
+        function getGreeting() {
+            const hour = new Date().getHours();
+            for (const g of greetings) {
+                if (hour >= g.start && hour <= g.end) return g.text;
+            }
+            return "你好呀~";
+        }
+
+        function getRandomEmoji() {
+            return emojis[Math.floor(Math.random() * emojis.length)];
+        }
+
         function updateClock() {
             const now = new Date();
             const hour = now.getHours();
@@ -109,9 +191,19 @@
             document.getElementById('time').textContent = 
                 `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}:${second.toString().padStart(2, '0')}`;
 
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            document.getElementById('date').textContent = now.toLocaleDateString('en-US', options);
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            const weekDay = now.getDay();
+            
+            document.getElementById('date').textContent = `${year}年${month}月${day}日`;
+            document.getElementById('day').textContent = weekDaysCN[weekDay];
+            
+            document.getElementById('greeting').textContent = getGreeting();
+            document.getElementById('emoji').textContent = getRandomEmoji();
         }
+
+        createNumbers();
         setInterval(updateClock, 1000);
         updateClock();
     </script>
